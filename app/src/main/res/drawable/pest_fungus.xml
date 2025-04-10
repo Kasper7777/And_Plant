@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Fungus caps -->
+    <path
+        android:fillColor="#9575CD"
+        android:pathData="M25,40 Q35,20 45,40 L45,50 L25,50 z" />
+    
+    <path
+        android:fillColor="#7E57C2"
+        android:pathData="M55,30 Q65,10 75,30 L75,40 L55,40 z" />
+    
+    <path
+        android:fillColor="#673AB7"
+        android:pathData="M40,50 Q50,30 60,50 L60,60 L40,60 z" />
+    
+    <!-- Fungus stems -->
+    <path
+        android:fillColor="#D1C4E9"
+        android:pathData="M30,50 L30,70 L40,70 L40,50 z" />
+    
+    <path
+        android:fillColor="#B39DDB"
+        android:pathData="M60,40 L60,60 L70,60 L70,40 z" />
+    
+    <path
+        android:fillColor="#D1C4E9"
+        android:pathData="M45,60 L45,80 L55,80 L55,60 z" />
+    
+    <!-- Spores -->
+    <path
+        android:fillColor="#EDE7F6"
+        android:pathData="M20,55 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M25,60 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M75,50 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M70,55 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M45,45 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M55,65 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+</vector> 

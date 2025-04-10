@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Mite body -->
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M50,50 a20,15 0 1,0 40,0 a20,15 0 1,0 -40,0" />
+    
+    <!-- Mite eyes -->
+    <path
+        android:fillColor="#263238"
+        android:pathData="M45,45 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M55,45 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    
+    <!-- Mite legs -->
+    <path
+        android:strokeColor="#B71C1C"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M40,45 L30,35 M40,50 L25,50 M40,55 L30,65 M60,45 L70,35 M60,50 L75,50 M60,55 L70,65" />
+    
+    <!-- Web strands -->
+    <path
+        android:strokeColor="#EEEEEE"
+        android:strokeWidth="1"
+        android:pathData="M20,20 L80,80 M20,80 L80,20 M10,50 L90,50" />
+</vector> 

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Aphid bodies -->
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M40,50 a8,10 0 1,0 16,0 a8,10 0 1,0 -16,0" />
+    
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M20,65 a8,10 0 1,0 16,0 a8,10 0 1,0 -16,0" />
+    
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M60,65 a8,10 0 1,0 16,0 a8,10 0 1,0 -16,0" />
+    
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M40,80 a8,10 0 1,0 16,0 a8,10 0 1,0 -16,0" />
+    
+    <!-- Aphid eyes and details -->
+    <path
+        android:fillColor="#263238"
+        android:pathData="M44,47 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M48,47 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    
+    <path
+        android:fillColor="#263238"
+        android:pathData="M24,62 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M28,62 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    
+    <path
+        android:fillColor="#263238"
+        android:pathData="M64,62 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M68,62 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    
+    <path
+        android:fillColor="#263238"
+        android:pathData="M44,77 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M48,77 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    
+    <!-- Antennae -->
+    <path
+        android:strokeColor="#263238"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M44,40 L40,30 M52,40 L56,30" />
+</vector> 

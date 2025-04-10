@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Sun (harsh) -->
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M50,50 m-30,0 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0" />
+    
+    <!-- Heat waves -->
+    <path
+        android:strokeColor="#FF9800"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M20,30 Q30,25 20,20 M25,40 Q35,35 25,30 M75,30 Q65,25 75,20 M75,60 Q65,65 75,70 M25,60 Q35,65 25,70" />
+    
+    <!-- Cracked ground -->
+    <path
+        android:strokeColor="#795548"
+        android:strokeWidth="2"
+        android:pathData="M10,85 L90,85 M30,85 L40,95 M60,85 L50,95 M70,85 L80,95" />
+</vector> 

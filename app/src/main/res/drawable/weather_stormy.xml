@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Cloud -->
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M65,40 A15,15 0 0,0 40,35 A10,10 0 0,0 25,40 A15,15 0 0,0 65,45 z" />
+    
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M80,45 A12,12 0 0,0 60,42 A12,12 0 0,0 45,45 A15,15 0 0,0 80,50 z" />
+    
+    <!-- Lightning bolt -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M55,50 L45,65 L55,65 L45,85 L65,60 L55,60 z" />
+    
+    <!-- Rain drops -->
+    <path
+        android:strokeColor="#2196F3"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M30,55 L25,70 M75,55 L70,70" />
+</vector> 
