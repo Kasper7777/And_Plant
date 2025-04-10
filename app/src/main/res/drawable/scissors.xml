@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Scissor handles -->
+    <path
+        android:fillColor="#607D8B"
+        android:pathData="M30,80 a10,15 0 1,0 20,0 a10,15 0 1,0 -20,0" />
+    
+    <path
+        android:fillColor="#607D8B"
+        android:pathData="M50,80 a10,15 0 1,0 20,0 a10,15 0 1,0 -20,0" />
+    
+    <!-- Scissor blades -->
+    <path
+        android:fillColor="#BDBDBD"
+        android:pathData="M40,65 L60,45 L70,55 L50,75 z" />
+    
+    <path
+        android:fillColor="#9E9E9E"
+        android:pathData="M40,35 L60,55 L70,45 L50,25 z" />
+    
+    <!-- Pivot screw -->
+    <path
+        android:fillColor="#424242"
+        android:pathData="M55,50 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+    
+    <!-- Blade edges -->
+    <path
+        android:strokeColor="#E0E0E0"
+        android:strokeWidth="1.5"
+        android:pathData="M40,65 L60,45 M40,35 L60,55" />
+</vector> 

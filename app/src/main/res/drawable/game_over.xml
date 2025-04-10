@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    
+    <!-- Background -->
+    <path
+        android:fillColor="#37474F"
+        android:pathData="M0,0 L100,0 L100,100 L0,100 z" />
+    
+    <!-- Dead plant silhouette -->
+    <path
+        android:fillColor="#263238"
+        android:pathData="M50,80 L55,80 L55,50 L50,50 z" />
+    
+    <path
+        android:fillColor="#263238"
+        android:pathData="M40,50 Q30,30 35,15 Q40,20 45,25 Q47,30 50,50 z" />
+    
+    <path
+        android:fillColor="#263238"
+        android:pathData="M60,50 Q70,30 65,15 Q60,20 55,25 Q53,30 50,50 z" />
+    
+    <path
+        android:fillColor="#263238"
+        android:pathData="M45,40 Q35,30 25,35 Q30,40 35,40 Q40,40 45,40 z" />
+    
+    <path
+        android:fillColor="#263238"
+        android:pathData="M55,40 Q65,30 75,35 Q70,40 65,40 Q60,40 55,40 z" />
+    
+    <!-- Game Over text -->
+    <path
+        android:fillColor="#EF5350"
+        android:pathData="M25,20 L75,20 L75,35 L25,35 z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,30 L35,30 L35,25 L45,25 L45,30 L50,30 L50,25 L60,25 L60,30 L65,30 L65,25 L70,25 L70,30 L65,30 L65,25 z" />
+</vector> 

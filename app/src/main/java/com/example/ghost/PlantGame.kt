@@ -32,8 +32,30 @@ enum class PestType {
     NONE
 }
 
+enum class DiseaseType {
+    LEAF_SPOT,
+    POWDERY_MILDEW,
+    ROOT_ROT,
+    NONE
+}
+
+data class Leaf(
+    val id: Int,
+    var isDiseased: Boolean = false,
+    var diseaseType: DiseaseType = DiseaseType.NONE,
+    var diseaseProgress: Int = 0, // 0-100
+    var position: String = "" // "top", "middle", "bottom"
+)
+
 // Cache for weather probabilities to avoid recreating them
 private val weatherTransitionCache = mutableMapOf<Weather, List<Int>>()
+
+// Mapping of which pests cause which diseases
+private val pestToDiseaseMap = mapOf(
+    PestType.APHIDS to DiseaseType.LEAF_SPOT,
+    PestType.MITES to DiseaseType.POWDERY_MILDEW,
+    PestType.FUNGUS to DiseaseType.ROOT_ROT
+)
 
 class PlantGame : ViewModel() {
     var waterLevel by mutableStateOf(50)
@@ -69,6 +91,15 @@ class PlantGame : ViewModel() {
     var money by mutableStateOf(100)
         private set
     
+    var leaves by mutableStateOf<List<Leaf>>(emptyList())
+        private set
+    
+    var isGameOver by mutableStateOf(false)
+        private set
+        
+    var pestInfestationDays by mutableStateOf(0)
+        private set
+    
     // Flag to prevent multiple rapid actions
     var isProcessing by mutableStateOf(false)
         private set
@@ -85,7 +116,7 @@ class PlantGame : ViewModel() {
     )
     
     fun waterPlant() {
-        if (isProcessing) return
+        if (isProcessing || isGameOver) return
         if (waterLevel < maxWaterLevel) {
             waterLevel = (waterLevel + 15).coerceAtMost(maxWaterLevel)
             money -= 2 // Water costs money
@@ -94,7 +125,7 @@ class PlantGame : ViewModel() {
     }
     
     fun addNutrients() {
-        if (isProcessing) return
+        if (isProcessing || isGameOver) return
         if (nutrientLevel < maxNutrientLevel) {
             nutrientLevel = (nutrientLevel + 25).coerceAtMost(maxNutrientLevel)
             money -= 5 // Nutrients cost money
@@ -103,10 +134,11 @@ class PlantGame : ViewModel() {
     }
     
     fun treatPests() {
-        if (isProcessing) return
+        if (isProcessing || isGameOver) return
         if (hasPests) {
             hasPests = false
             currentPests = PestType.NONE
+            pestInfestationDays = 0
             health -= 5 // Pesticides slightly harm the plant too
             money -= 10 // Pest treatment costs money
             money = money.coerceAtLeast(0)
@@ -114,14 +146,33 @@ class PlantGame : ViewModel() {
     }
     
     fun adjustTemperature(increase: Boolean) {
-        if (isProcessing) return
+        if (isProcessing || isGameOver) return
         temperature += if (increase) 2 else -2
         money -= 3 // Temperature control costs money
         money = money.coerceAtLeast(0)
     }
     
+    fun cutDiseasedLeaf(leafId: Int) {
+        if (isProcessing || isGameOver) return
+        
+        val leafIndex = leaves.indexOfFirst { it.id == leafId }
+        if (leafIndex != -1 && leaves[leafIndex].isDiseased) {
+            val newLeaves = leaves.toMutableList()
+            newLeaves.removeAt(leafIndex)
+            leaves = newLeaves
+            
+            // Cutting leaves has a minor impact on growth
+            growthPoints -= 2
+            growthPoints = growthPoints.coerceAtLeast(0)
+            
+            // Cost of cutting leaves
+            money -= 5
+            money = money.coerceAtLeast(0)
+        }
+    }
+    
     fun advanceDay() {
-        if (isProcessing) return
+        if (isProcessing || isGameOver) return
         
         isProcessing = true
         
@@ -151,7 +202,16 @@ class PlantGame : ViewModel() {
         // Apply pest damage if present
         if (hasPests) {
             applyPestDamage()
+            pestInfestationDays++
+            
+            // After 3 days of infestation, start causing disease
+            if (pestInfestationDays >= 3 && Random.nextInt(100) < 40) {
+                createDiseaseOnLeaf()
+            }
         }
+        
+        // Process existing diseases
+        processDiseases()
         
         // Water level decreases each day
         val waterDecrease = when (currentWeather) {
@@ -188,12 +248,118 @@ class PlantGame : ViewModel() {
             health = (health + 5).coerceAtMost(maxHealth)
         }
         
+        // Generate new leaves as the plant grows
+        if (growthPoints % 15 == 0 && growthPoints > 0 && leaves.size < getMaxLeaves()) {
+            addNewLeaf()
+        }
+        
         // Plant can die if health reaches zero
         if (health <= 0) {
-            resetGame()
+            health = 0
+            isGameOver = true
         }
         
         daysPassed++
+    }
+    
+    private fun getMaxLeaves(): Int {
+        return when (plantStage) {
+            PlantStage.SEED -> 0
+            PlantStage.SPROUT -> 2
+            PlantStage.YOUNG -> 5
+            PlantStage.MATURE -> 8
+            PlantStage.FLOWERING -> 12
+        }
+    }
+    
+    private fun addNewLeaf() {
+        val newLeaf = Leaf(
+            id = if (leaves.isEmpty()) 1 else leaves.maxByOrNull { it.id }!!.id + 1,
+            position = when {
+                leaves.size < getMaxLeaves() / 3 -> "bottom"
+                leaves.size < getMaxLeaves() * 2/3 -> "middle"
+                else -> "top"
+            }
+        )
+        
+        leaves = leaves + newLeaf
+    }
+    
+    private fun createDiseaseOnLeaf() {
+        if (leaves.isEmpty() || currentPests == PestType.NONE) return
+        
+        // Find a healthy leaf
+        val healthyLeaves = leaves.filter { !it.isDiseased }
+        if (healthyLeaves.isEmpty()) return
+        
+        val targetLeaf = healthyLeaves.random()
+        val diseaseType = pestToDiseaseMap[currentPests] ?: DiseaseType.LEAF_SPOT
+        
+        // Create a new list with the infected leaf
+        val newLeaves = leaves.toMutableList()
+        val index = newLeaves.indexOfFirst { it.id == targetLeaf.id }
+        if (index != -1) {
+            newLeaves[index] = targetLeaf.copy(
+                isDiseased = true,
+                diseaseType = diseaseType,
+                diseaseProgress = 10
+            )
+            leaves = newLeaves
+        }
+    }
+    
+    private fun processDiseases() {
+        if (leaves.none { it.isDiseased }) return
+        
+        val newLeaves = leaves.toMutableList()
+        var spreadDisease = false
+        
+        // Progress existing diseases
+        for (i in newLeaves.indices) {
+            if (newLeaves[i].isDiseased) {
+                // Progress the disease
+                newLeaves[i] = newLeaves[i].copy(
+                    diseaseProgress = (newLeaves[i].diseaseProgress + Random.nextInt(5, 15)).coerceAtMost(100)
+                )
+                
+                // Damage plant based on disease progress
+                if (newLeaves[i].diseaseProgress >= 50) {
+                    health -= (newLeaves[i].diseaseProgress / 20)
+                    
+                    // Chance to spread to another leaf
+                    if (Random.nextInt(100) < 30) {
+                        spreadDisease = true
+                    }
+                }
+                
+                // If disease reaches 100%, the leaf is destroyed
+                if (newLeaves[i].diseaseProgress >= 100) {
+                    health -= 10 // Major health penalty
+                    newLeaves.removeAt(i)
+                    break // Avoid concurrent modification
+                }
+            }
+        }
+        
+        // Possibly spread disease to another leaf
+        if (spreadDisease) {
+            val healthyLeaves = newLeaves.filter { !it.isDiseased }
+            if (healthyLeaves.isNotEmpty()) {
+                val targetLeaf = healthyLeaves.random()
+                val sourceLeaf = newLeaves.first { it.isDiseased }
+                
+                val index = newLeaves.indexOfFirst { it.id == targetLeaf.id }
+                if (index != -1) {
+                    newLeaves[index] = targetLeaf.copy(
+                        isDiseased = true,
+                        diseaseType = sourceLeaf.diseaseType,
+                        diseaseProgress = 5
+                    )
+                }
+            }
+        }
+        
+        leaves = newLeaves
     }
     
     private fun updateWeather() {
@@ -242,6 +408,7 @@ class PlantGame : ViewModel() {
         currentPests = PestType.values().let { 
             it[Random.nextInt(it.size - 1)] // Exclude NONE
         }
+        pestInfestationDays = 0
     }
     
     private fun applyPestDamage() {
@@ -282,6 +449,12 @@ class PlantGame : ViewModel() {
                 growthAmount *= 0.5f
             }
             
+            // Disease modifier
+            val diseasedLeafCount = leaves.count { it.isDiseased }
+            if (diseasedLeafCount > 0) {
+                growthAmount *= (1.0f - (diseasedLeafCount.toFloat() / leaves.size.toFloat() * 0.5f))
+            }
+            
             growthPoints += growthAmount.toInt()
             
             // Check if plant should advance to next stage
@@ -320,5 +493,8 @@ class PlantGame : ViewModel() {
         hasPests = false
         currentPests = PestType.NONE
         money = 100
+        leaves = emptyList()
+        pestInfestationDays = 0
+        isGameOver = false
     }
 } 

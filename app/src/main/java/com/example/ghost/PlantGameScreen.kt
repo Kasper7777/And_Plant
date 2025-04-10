@@ -1,9 +1,15 @@
 package com.example.ghost
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,99 +30,340 @@ fun PlantGameScreen(
     plantGame: PlantGame,
     modifier: Modifier = Modifier
 ) {
-    // Use LazyColumn instead of verticalScroll for better performance
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
+    val showCutLeafDialog = remember { mutableStateOf<Leaf?>(null) }
+    
+    // Wrap in Box to allow for Game Over overlay
+    Box(modifier = modifier.fillMaxSize()) {
+        // Use LazyColumn instead of verticalScroll for better performance
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item {
+                GameHeader(daysPassed = plantGame.daysPassed, money = plantGame.money)
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Memoize weather display to avoid unnecessary recompositions
+                val weatherInfo = remember(plantGame.currentWeather) {
+                    getWeatherInfo(plantGame.currentWeather)
+                }
+                WeatherDisplay(weatherInfo = weatherInfo)
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Health meter
+                    MeterDisplay(
+                        value = plantGame.health,
+                        label = "Health",
+                        color = Color(0xFFF44336),
+                        modifier = Modifier.weight(1f).padding(end = 4.dp)
+                    )
+                    
+                    // Temperature display
+                    TemperatureDisplay(
+                        temperature = plantGame.temperature,
+                        onIncreaseTemp = { plantGame.adjustTemperature(true) },
+                        onDecreaseTemp = { plantGame.adjustTemperature(false) },
+                        modifier = Modifier.weight(1f).padding(start = 4.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Memoize plant display
+                key(plantGame.plantStage, plantGame.hasPests, plantGame.currentPests) {
+                    PlantDisplay(
+                        plantStage = plantGame.plantStage,
+                        hasPests = plantGame.hasPests,
+                        pestType = plantGame.currentPests
+                    )
+                }
+                
+                // Display leaves if the plant has grown enough
+                if (plantGame.leaves.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    LeafDisplay(
+                        leaves = plantGame.leaves,
+                        onLeafClick = { leaf ->
+                            if (leaf.isDiseased) {
+                                showCutLeafDialog.value = leaf
+                            }
+                        }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // If there are leaves with diseases, show a warning
+                if (plantGame.leaves.any { it.isDiseased }) {
+                    DiseaseWarning()
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Water meter
+                    MeterDisplay(
+                        value = plantGame.waterLevel,
+                        label = "Water",
+                        color = Color(0xFF03A9F4),
+                        modifier = Modifier.weight(1f).padding(end = 4.dp)
+                    )
+                    
+                    // Nutrient meter
+                    MeterDisplay(
+                        value = plantGame.nutrientLevel,
+                        label = "Nutrients",
+                        color = Color(0xFF4CAF50),
+                        modifier = Modifier.weight(1f).padding(start = 4.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Action buttons
+                ActionButtonsSection(
+                    plantGame = plantGame,
+                    isProcessing = plantGame.isProcessing
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                LoadingIndicator(visible = plantGame.isProcessing)
+                
+                Button(
+                    onClick = { plantGame.resetGame() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF795548)),
+                    enabled = !plantGame.isProcessing
+                ) {
+                    Text("Reset Game", color = Color.White)
+                }
+            }
+        }
+        
+        // Show Game Over overlay if health is zero
+        if (plantGame.isGameOver) {
+            GameOverOverlay(onReset = { plantGame.resetGame() })
+        }
+        
+        // Show dialog for cutting leaves
+        showCutLeafDialog.value?.let { leaf ->
+            CutLeafDialog(
+                leaf = leaf,
+                onDismiss = { showCutLeafDialog.value = null },
+                onConfirm = {
+                    plantGame.cutDiseasedLeaf(leaf.id)
+                    showCutLeafDialog.value = null
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun LeafDisplay(
+    leaves: List<Leaf>,
+    onLeafClick: (Leaf) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item {
-            GameHeader(daysPassed = plantGame.daysPassed, money = plantGame.money)
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Memoize weather display to avoid unnecessary recompositions
-            val weatherInfo = remember(plantGame.currentWeather) {
-                getWeatherInfo(plantGame.currentWeather)
+        Text(
+            text = "Plant Leaves",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2E7D32)
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+        ) {
+            items(leaves) { leaf ->
+                LeafItem(leaf = leaf, onClick = { onLeafClick(leaf) })
             }
-            WeatherDisplay(weatherInfo = weatherInfo)
+        }
+    }
+}
+
+@Composable
+fun LeafItem(
+    leaf: Leaf,
+    onClick: () -> Unit
+) {
+    val scaleAnimation = animateFloatAsState(
+        targetValue = if (leaf.isDiseased) 0.9f else 1.0f,
+        label = "LeafScale"
+    )
+    
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .size(48.dp)
+            .clickable(enabled = leaf.isDiseased) { onClick() }
+    ) {
+        // Show appropriate leaf image based on disease status and type
+        val leafRes = when {
+            !leaf.isDiseased -> R.drawable.leaf_healthy
+            leaf.diseaseType == DiseaseType.LEAF_SPOT -> R.drawable.leaf_spot_disease
+            leaf.diseaseType == DiseaseType.POWDERY_MILDEW -> R.drawable.leaf_powdery_mildew
+            leaf.diseaseType == DiseaseType.ROOT_ROT -> R.drawable.leaf_root_rot
+            else -> R.drawable.leaf_healthy
+        }
+        
+        Image(
+            painter = painterResource(id = leafRes),
+            contentDescription = "Leaf ${if (leaf.isDiseased) "diseased" else "healthy"}",
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(40.dp)
+        )
+        
+        // Show scissors icon if leaf is diseased
+        if (leaf.isDiseased) {
+            Image(
+                painter = painterResource(id = R.drawable.scissors),
+                contentDescription = "Cut leaf",
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(20.dp)
+                    .background(Color.White.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                    .padding(2.dp)
+            )
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Disease progress indicator
+            LinearProgressIndicator(
+                progress = leaf.diseaseProgress / 100f,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(4.dp),
+                color = when (leaf.diseaseType) {
+                    DiseaseType.LEAF_SPOT -> Color(0xFF795548)
+                    DiseaseType.POWDERY_MILDEW -> Color(0xFFBDBDBD)
+                    DiseaseType.ROOT_ROT -> Color(0xFF8D6E63)
+                    else -> Color(0xFFF44336)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun DiseaseWarning() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFFFF3E0))
+            .border(1.dp, Color(0xFFFFB74D), RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "⚠️ Some leaves have diseases! Cut them before they spread.",
+            color = Color(0xFFE65100),
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun CutLeafDialog(
+    leaf: Leaf,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Cut Diseased Leaf") },
+        text = {
+            Column {
+                Text("This leaf has ${leaf.diseaseType.name.replace("_", " ")}.")
+                Text("Progress: ${leaf.diseaseProgress}%")
+                Text("Cutting this leaf will cost $5 and reduce growth slightly.")
+                Text("If you don't cut it, the disease may spread to other leaves and damage your plant!")
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
             ) {
-                // Health meter
-                MeterDisplay(
-                    value = plantGame.health,
-                    label = "Health",
-                    color = Color(0xFFF44336),
-                    modifier = Modifier.weight(1f).padding(end = 4.dp)
-                )
-                
-                // Temperature display
-                TemperatureDisplay(
-                    temperature = plantGame.temperature,
-                    onIncreaseTemp = { plantGame.adjustTemperature(true) },
-                    onDecreaseTemp = { plantGame.adjustTemperature(false) },
-                    modifier = Modifier.weight(1f).padding(start = 4.dp)
-                )
+                Text("Cut Leaf ($5)")
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Memoize plant display
-            key(plantGame.plantStage, plantGame.hasPests, plantGame.currentPests) {
-                PlantDisplay(
-                    plantStage = plantGame.plantStage,
-                    hasPests = plantGame.hasPests,
-                    pestType = plantGame.currentPests
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9E9E9E))
             ) {
-                // Water meter
-                MeterDisplay(
-                    value = plantGame.waterLevel,
-                    label = "Water",
-                    color = Color(0xFF03A9F4),
-                    modifier = Modifier.weight(1f).padding(end = 4.dp)
-                )
-                
-                // Nutrient meter
-                MeterDisplay(
-                    value = plantGame.nutrientLevel,
-                    label = "Nutrients",
-                    color = Color(0xFF4CAF50),
-                    modifier = Modifier.weight(1f).padding(start = 4.dp)
-                )
+                Text("Cancel")
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Action buttons
-            ActionButtonsSection(
-                plantGame = plantGame,
-                isProcessing = plantGame.isProcessing
+        }
+    )
+}
+
+@Composable
+fun GameOverOverlay(onReset: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.8f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.game_over),
+                contentDescription = "Game Over",
+                modifier = Modifier.size(200.dp)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            LoadingIndicator(visible = plantGame.isProcessing)
+            Text(
+                text = "Your plant has died!",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Take better care of your next plant.",
+                color = Color.White,
+                fontSize = 16.sp
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
             
             Button(
-                onClick = { plantGame.resetGame() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF795548)),
-                enabled = !plantGame.isProcessing
+                onClick = onReset,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
             ) {
-                Text("Reset Game", color = Color.White)
+                Text("Try Again", color = Color.White)
             }
         }
     }
@@ -157,7 +404,7 @@ fun ActionButtonsSection(
             icon = R.drawable.seed,
             onClick = { plantGame.waterPlant() },
             color = Color(0xFF03A9F4),
-            enabled = plantGame.money >= 2 && !isProcessing
+            enabled = plantGame.money >= 2 && !isProcessing && !plantGame.isGameOver
         )
         
         ActionButton(
@@ -165,7 +412,7 @@ fun ActionButtonsSection(
             icon = R.drawable.seed,
             onClick = { plantGame.addNutrients() },
             color = Color(0xFF4CAF50),
-            enabled = plantGame.money >= 5 && !isProcessing
+            enabled = plantGame.money >= 5 && !isProcessing && !plantGame.isGameOver
         )
     }
     
@@ -191,7 +438,7 @@ fun ActionButtonsSection(
             icon = pestIcon,
             onClick = { plantGame.treatPests() },
             color = Color(0xFFFF9800),
-            enabled = plantGame.hasPests && plantGame.money >= 10 && !isProcessing
+            enabled = plantGame.hasPests && plantGame.money >= 10 && !isProcessing && !plantGame.isGameOver
         )
         
         ActionButton(
@@ -199,7 +446,7 @@ fun ActionButtonsSection(
             icon = R.drawable.seed,
             onClick = { plantGame.advanceDay() },
             color = Color(0xFF9C27B0),
-            enabled = !isProcessing
+            enabled = !isProcessing && !plantGame.isGameOver
         )
     }
 }
